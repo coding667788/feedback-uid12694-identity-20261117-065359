@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "comment": "代理：解码1遍、反斜杠不折叠、不折叠点段、大小写敏感、保留尾斜杠；后端：解码2遍、反斜杠即分隔符、折叠点段、大小写不敏感、去尾斜杠。",
+  "proxy": {
+    "policy": {
+      "percent_decode": 1,
+      "backslash_separator": false,
+      "dot_collapse": false,
+      "case_insensitive": false,
+      "trailing_slash": "keep"
+    },
+    "acl": [
+      {"id": "PUB", "prefix": "/public", "action": "public"},
+      {"id": "PRIV", "prefix": "/private", "action": "private"},
+      {"id": "PRIVADMIN", "prefix": "/private/admin", "action": "private"}
+    ],
+    "default_action": "public"
+  },
+  "backend": {
+    "policy": {
+      "percent_decode": 2,
+      "backslash_separator": true,
+      "dot_collapse": true,
+      "case_insensitive": true,
+      "trailing_slash": "strip"
+    },
+    "zones": [
+      {"id": "ZPUB", "prefix": "/public", "zone": "public"},
+      {"id": "ZPRIV", "prefix": "/private", "zone": "private"}
+    ],
+    "default_zone": "public"
+  },
+  "seeds": [
+    {"id": "s-double", "raw": "/x/%252e%252e%252fprivate/secret"},
+    {"id": "s-mixed-sep", "raw": "/public/..\\private/secret"},
+    {"id": "s-empty", "raw": "//private/secret"},
+    {"id": "s-case-dot", "raw": "/PUBLIC/%2E%2E/PRIVATE/secret"},
+    {"id": "s-trailing-dot", "raw": "/private/secret."},
+    {"id": "s-counter", "raw": "/PUBLIC/info"},
+    {"id": "s-trail-slash", "raw": "/private/"},
+    {"id": "s-above-root", "raw": "/public/../../private/x"},
+    {"id": "s-double-ok", "raw": "/public/%252e%252e%252fpublic/secret"},
+    {"id": "s-file", "file": "samples/seed_file.txt"},
+    {"id": "s-utf8-bad", "file": "samples/bad_utf8.bin"}
+  ],
+  "mutations": [
+    "identity",
+    "encode_all_once",
+    "encode_path_specials",
+    "double_encode",
+    "swap_backslash",
+    "mixed_separators",
+    "case_flip",
+    "append_slash",
+    "strip_slash",
+    "insert_empty_segment",
+    "append_trailing_dot",
+    "dot_wrap",
+    "upper_hex",
+    "lower_hex"
+  ],
+  "normal_routes": [
+    {"id": "n-public", "raw": "/public/index.html", "expect_proxy": "public", "expect_backend": "public"},
+    {"id": "n-private", "raw": "/private/secret", "expect_proxy": "private", "expect_backend": "private"},
+    {"id": "n-admin", "raw": "/private/admin/panel", "expect_proxy": "private", "expect_backend": "private"},
+    {"id": "n-slash", "raw": "/public/", "expect_proxy": "public", "expect_backend": "public"}
+  ]
+}
